@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazigh Calendar</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding-top: 20px;
+        }
+
+        .calendar-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            margin-bottom: 20px;
+        }
+
+        #calendar {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #calendar th, #calendar td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #calendar th {
+            background-color: #f2f2f2;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .calendar-header button, #dateInputContainer button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .calendar-header button:hover, #dateInputContainer button:hover{
+             background-color: #367c39;
+        }
+
+        .current-date {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        #calendar td.today {
+            background-color: #e0f7fa;
+            font-weight: bold;
+        }
+
+        #calendar td.selected {
+            background-color: #b2ebf2;
+        }
+
+        #dateInputContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group label {
+            width: 120px;
+            text-align: right;
+        }
+
+        #gregorianDateInput, #amazighDateInput {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .gregorian-date{
+            font-size: 0.8em;
+            color: gray;
+            margin-top: 5px;
+        }
+       #gregorianDateDisplay, #amazighDateDisplay{
+          margin-bottom: 5px;
+       }
+       #calendar td:empty {
+          border: 1px solid #ddd; /* Keep empty cells visible */
+       }
+       .current-date p{
+          margin: 0;
+       }
+
+
+    </style>
+</head>
+<body>
+
+<div class="calendar-container">
+    <div class="calendar-header">
+        <button id="prevMonth">< Prev</button>
+        <h2 id="currentMonth"></h2>
+        <button id="nextMonth">Next ></button>
+    </div>
+    <div id="gregorianDateDisplay"></div>
+    <div id="amazighDateDisplay"></div>
+
+    <div class="current-date">
+        <p>Today is:</p>
+        <p><span id="currentDayAmazigh"></span></p>
+        <p><span id="currentDayGregorian"></span></p>
+    </div>
+
+    <table id="calendar">
+        <thead>
+            <tr>
+                <th>ⴰⵢⵏⴰⵙ</th><th>ⴰⵙⵉⵏⴰⵙ</th><th>ⴰⴽⵕⴰⵙ</th><th>ⴰⴽⵡⴰⵙ</th><th>ⴰⵙⵉⵎⵡⴰⵙ</th><th>ⴰⵚⵉⴹⵢⴰⵙ</th><th>ⴰⵙⴰⵎⴰⵙ</th>
+            </tr>
+        </thead>
+        <tbody id="calendarBody">
+        </tbody>
+    </table>
+    <button id="goToToday">Go to Current Date</button>
+</div>
+
+<div id="dateInputContainer">
+    <div class="input-group">
+        <label for="gregorianDateInput">Gregorian Date:</label>
+        <input type="text" id="gregorianDateInput" placeholder="DD/MM/YYYY">
+    </div>
+    <div class="input-group">
+        <label for="amazighDateInput">Amazigh Date:</label>
+        <input type="text" id="amazighDateInput" placeholder="DD/MM/YYYY">
+    </div>
+
+    <button id="goToDate">Go to Date</button>
+</div>
+
+<script>
+    let currentDate = new Date();
+    let selectedDate = new Date();
+
+    function getAmazighDate(gregorianDate) {
+        let amazighYear = gregorianDate.getFullYear() + 950;
+        let amazighDay = gregorianDate.getDate() - 13;
+        let amazighMonth = gregorianDate.getMonth();
+
+        if (amazighDay <= 0) {
+             amazighMonth--;
+             if (amazighMonth < 0) {
+                  amazighMonth = 11;
+                  amazighYear--;
+             }
+             let daysInPrevMonth = new Date(gregorianDate.getFullYear(), gregorianDate.getMonth(), 0).getDate();
+              amazighDay = daysInPrevMonth + amazighDay;
+
+        }
+        let amazighDate = new Date(gregorianDate.getFullYear(), gregorianDate.getMonth(), amazighDay);
+         const gregorianDaysInMonth = new Date(gregorianDate.getFullYear(), gregorianDate.getMonth()+1, 0).getDate();
+          if(amazighDay > gregorianDaysInMonth){
+             amazighDay -=  gregorianDaysInMonth;
+             amazighMonth = (amazighMonth + 1) % 12;
+            if (amazighMonth === 0) {
+                amazighYear++;
+            }
+         }
+
+        return {
+              year: amazighYear,
+              month: amazighMonth,
+              day: amazighDay
+            };
+    }
+     function getGregorianDate(amazighYear, amazighMonth, amazighDay){
+        let gregorianYear = amazighYear - 950;
+        let gregorianDay = amazighDay + 13;
+        let gregorianMonth = amazighMonth;
+
+        let gregorianDate = new Date(gregorianYear, gregorianMonth, gregorianDay);
+
+         const amazighDaysInMonth = new Date(gregorianYear, gregorianMonth+1, 0).getDate();
+          if(gregorianDay > amazighDaysInMonth){
+             gregorianDay -=  amazighDaysInMonth;
+             gregorianMonth = (gregorianMonth + 1) % 12;
+            if (gregorianMonth === 0) {
+                gregorianYear++;
+            }
+         }
+        return new Date(gregorianYear, gregorianMonth, gregorianDay);
+
+    }
+
+
+   function renderCalendar(date) {
+    const amazighDate = getAmazighDate(date);
+    const firstDayOfMonth = getGregorianDate(amazighDate.year, amazighDate.month, 1); // Get the Gregorian date of the 1st of the Amazigh month
+    const daysInMonth = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth() + 1, 0).getDate(); // Use Gregorian date for days in month
+    const startDayOfWeek = firstDayOfMonth.getDay(); // Corrected start day
+    const calendarBody = document.getElementById("calendarBody");
+    const currentMonthElement = document.getElementById("currentMonth");
+    const gregorianDateDisplay = document.getElementById("gregorianDateDisplay");
+    const amazighDateDisplay = document.getElementById("amazighDateDisplay");
+    const currentDayElementAmazigh = document.getElementById("currentDayAmazigh");
+     const currentDayElementGregorian = document.getElementById("currentDayGregorian");
+
+
+    const amazighDayNames = ["ⴰⵢⵏⴰⵙ", "ⴰⵙⵉⵏⴰⵙ", "ⴰⴽⵕⴰⵙ", "ⴰⴽⵡⴰⵙ", "ⴰⵙⵉⵎⵡⴰⵙ", "ⴰⵚⵉⴹⵢⴰⵙ", "ⴰⵙⴰⵎⴰⵙ"];
+    const gregorianDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    // Top display (selected date)
+    gregorianDateDisplay.textContent = `${gregorianDayNames[date.getDay()]} ${date.getDate()} ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+    amazighDateDisplay.textContent = `${amazighDayNames[getGregorianDate(amazighDate.year, amazighDate.month, amazighDate.day).getDay()]} ${amazighDate.day},  ${getMonthName(amazighDate.month)} ${amazighDate.year}`;
+
+    currentMonthElement.textContent = `${getMonthName(amazighDate.month)} ${amazighDate.year} / ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+
+    // "Today is" display (always the current date)
+        let today = new Date();
+        let amazighToday = getAmazighDate(today);
+        currentDayElementAmazigh.textContent = `${amazighDayNames[getGregorianDate(amazighToday.year, amazighToday.month, amazighToday.day).getDay()]} ${amazighToday.day}, ${getMonthName(amazighToday.month)} ${amazighToday.year}`;
+        currentDayElementGregorian.textContent = `${gregorianDayNames[today.getDay()]} ${today.getDate()} ${today.toLocaleString('default', { month: 'long' })} ${today.getFullYear()}`;
+
+
+    calendarBody.innerHTML = "";
+
+    let dateCounter = 1;
+    for (let i = 0; i < 6; i++) { // Always 5 rows (35 cells)
+        const row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+            const cell = document.createElement("td");
+            const currentDayIndex = i * 7 + j;
+
+            if (currentDayIndex >= startDayOfWeek && dateCounter <= daysInMonth) {
+                let cellAmazighDate = { ...amazighDate, day: dateCounter};  // Corrected to use dateCounter
+                cell.textContent = cellAmazighDate.day;
+
+                let gregorianCounterPart = getGregorianDate(cellAmazighDate.year, cellAmazighDate.month, dateCounter); // Calculate Gregorian date
+                cell.dataset.gregorianDate = gregorianCounterPart.toISOString();
+
+                const gregorianDateDiv = document.createElement("div");
+                gregorianDateDiv.classList.add("gregorian-date");
+                gregorianDateDiv.textContent = `${gregorianCounterPart.toLocaleString('default', { month: 'short' })} ${gregorianCounterPart.getDate()}`;
+                cell.appendChild(gregorianDateDiv);
+
+
+                if (amazighToday.year === cellAmazighDate.year &&
+                    amazighToday.month === cellAmazighDate.month &&
+                    amazighToday.day === cellAmazighDate.day) {
+                    cell.classList.add("today");
+                }
+
+                if (selectedDate.getFullYear() === gregorianCounterPart.getFullYear() &&
+                    selectedDate.getMonth() === gregorianCounterPart.getMonth() &&
+                    selectedDate.getDate() === gregorianCounterPart.getDate()) {
+                    cell.classList.add("selected");
+                }
+                cell.addEventListener("click", (event) => {
+                   document.querySelectorAll("#calendar td").forEach(td => td.classList.remove("selected"));
+                    const clickedGregorianDate = new Date(event.currentTarget.dataset.gregorianDate);
+                    selectedDate = clickedGregorianDate;
+
+                    document.getElementById("gregorianDateInput").value = formatDate(clickedGregorianDate);
+                    const clickedAmazighDate = getAmazighDate(clickedGregorianDate);
+                    document.getElementById("amazighDateInput").value = formatDate(getGregorianDate(clickedAmazighDate.year,clickedAmazighDate.month, clickedAmazighDate.day));
+
+                    renderCalendar(clickedGregorianDate);
+                });
+                 dateCounter++;
+            } // No else needed - leave cells empty
+
+            row.appendChild(cell);
+
+        }
+        calendarBody.appendChild(row);
+    }
+}
+
+    function getMonthName(monthIndex) {
+         const monthNames = [
+            "ⵉⵏⵏⴰⵢⵔ", "ⴱⵕⴰⵢⵕ", "ⵎⴰⵕⵚ", "ⵉⴱⵔⵉⵔ", "ⵎⴰⵢⵢⵓ", "ⵢⵓⵏⵢⵓ",
+            "ⵢⵓⵍⵢⵓ", "ⵖⵓⵛⵜ", "ⵛⵓⵜⴰⵏⴱⵓⵔ", "ⴽⵟⵓⴱⵕ", "ⵏⵓⵡⴰⵏⴱⵓⵔ", "ⴷⵓⵊⴰⵏⴱⵉⵔ"
+        ];
+        return monthNames[monthIndex];
+    }
+
+    function formatDate(date) {
+        if (!date) return '';
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+
+    document.getElementById("prevMonth").addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        selectedDate.setMonth(selectedDate.getMonth() - 1);
+        renderCalendar(currentDate);
+        document.getElementById("gregorianDateInput").value = formatDate(currentDate);
+        const currentAmazighDate = getAmazighDate(currentDate);
+        document.getElementById("amazighDateInput").value = formatDate(getGregorianDate(currentAmazighDate.year, currentAmazighDate.month, currentAmazighDate.day));
+    });
+
+    document.getElementById("nextMonth").addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        selectedDate.setMonth(selectedDate.getMonth() + 1);
+        renderCalendar(currentDate);
+        document.getElementById("gregorianDateInput").value = formatDate(currentDate);
+        const currentAmazighDate = getAmazighDate(currentDate);
+        document.getElementById("amazighDateInput").value = formatDate(getGregorianDate(currentAmazighDate.year, currentAmazighDate.month, currentAmazighDate.day));
+    });
+
+    document.getElementById("goToToday").addEventListener("click", () => {
+        currentDate = new Date();
+        selectedDate = new Date();
+        renderCalendar(currentDate);
+        document.getElementById("gregorianDateInput").value = formatDate(currentDate);
+        const currentAmazighDate = getAmazighDate(currentDate);
+        document.getElementById("amazighDateInput").value = formatDate(getGregorianDate(currentAmazighDate.year, currentAmazighDate.month, currentAmazighDate.day));
+    });
+
+   document.getElementById("goToDate").addEventListener("click", () => {
+    const gregorianDateString = document.getElementById("gregorianDateInput").value;
+    const amazighDateString = document.getElementById("amazighDateInput").value;
+
+    if (gregorianDateString) {
+        const [day, month, year] = gregorianDateString.split("/");
+        const gregorianDate = new Date(year, month - 1, day);
+
+        if (!isNaN(gregorianDate.getTime())) {
+            currentDate = gregorianDate;
+            selectedDate = gregorianDate;
+            renderCalendar(currentDate);
+            const amazighDate = getAmazighDate(gregorianDate);
+             document.getElementById("amazighDateInput").value = `${String(amazighDate.day).padStart(2, '0')}/${String(amazighDate.month + 1).padStart(2, '0')}/${amazighDate.year}`;
+        } else {
+            alert("Please enter a valid Gregorian date in DD/MM/YYYY format.");
+        }
+    } else if (amazighDateString) {
+        const [day, month, year] = amazighDateString.split("/");
+        const amazighMonth = parseInt(month, 10) -1;
+        const amazighDate = { year: parseInt(year), month: amazighMonth, day: parseInt(day) };
+
+        if (!isNaN(amazighDate.year) && !isNaN(amazighDate.month) && !isNaN(amazighDate.day) && amazighDate.month >= 0 && amazighDate.month <=11) {
+             const gregorianDate =  getGregorianDate(amazighDate.year, amazighDate.month, amazighDate.day);
+            currentDate = gregorianDate;
+            selectedDate = gregorianDate;
+            renderCalendar(currentDate);
+             document.getElementById("gregorianDateInput").value = `${String(gregorianDate.getDate()).padStart(2, '0')}/${String(gregorianDate.getMonth() + 1).padStart(2, '0')}/${gregorianDate.getFullYear()}`;
+        } else {
+            alert("Please enter a valid Amazigh date in DD/MM/YYYY format.");
+        }
+    }
+});
+    renderCalendar(currentDate);
+</script>
+
+</body>
+</html>
